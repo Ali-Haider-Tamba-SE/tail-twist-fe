@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTheme } from '@/components/theme-provider';
@@ -15,59 +15,115 @@ const navigationItems = [
 
 export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const { theme, toggleTheme } = useTheme();
+
+  // Handle screen resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Overlay for mobile */}
+      {isSidebarOpen && isMobile && (
+        <div
+          className="fixed inset-0 bg-gray-900/50 z-30 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-40 h-screen transition-transform ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 w-64`}
+        className={`fixed top-0 left-0 z-40 h-screen transition-all duration-300 
+          ${isSidebarOpen ? 'w-64' : 'w-16'} 
+          ${
+            isMobile
+              ? isSidebarOpen
+                ? 'translate-x-0'
+                : '-translate-x-full'
+              : 'translate-x-0'
+          }
+          bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700`}
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <Link href="/dashboard" className="flex items-center space-x-3">
-              <Image
-                src="/story.webp"
-                alt="TwistTale Logo"
-                width={32}
-                height={32}
-                className="object-contain"
-              />
-              <span className="text-xl font-semibold text-gray-900 dark:text-white">
-                TwistTale
-              </span>
+              <div className={`${!isSidebarOpen && 'mx-auto'}`}>
+                <Image
+                  src="/story.webp"
+                  alt="TwistTale Logo"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                />
+              </div>
+              {isSidebarOpen && (
+                <span className="text-xl font-semibold text-gray-900 dark:text-white truncate">
+                  TwistTale
+                </span>
+              )}
             </Link>
           </div>
 
           {/* Navigation Items */}
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 p-4 space-y-2 overflow-hidden">
             {navigationItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                className="flex items-center p-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="flex items-center min-h-[48px] px-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group relative"
               >
-                <span className="mr-3">{item.icon}</span>
-                <span>{item.name}</span>
+                <span className={`text-xl ${!isSidebarOpen && 'mx-auto'}`}>
+                  {item.icon}
+                </span>
+                {isSidebarOpen && (
+                  <span className="ml-3 truncate">{item.name}</span>
+                )}
+                {/* Tooltip for collapsed state */}
+                {!isSidebarOpen && !isMobile && (
+                  <div className="hidden group-hover:block absolute left-full pl-3 ml-0 z-50">
+                    <div className="bg-gray-900 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
+                      {item.name}
+                    </div>
+                  </div>
+                )}
               </Link>
             ))}
           </nav>
 
           {/* User Profile Section */}
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600"></div>
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white">
-                  John Doe
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  john@example.com
-                </p>
-              </div>
+            <div className="flex items-center space-x-3 group relative min-h-[40px]">
+              <div
+                className={`w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex-shrink-0 ${
+                  !isSidebarOpen && 'mx-auto'
+                }`}
+              />
+              {isSidebarOpen && (
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-gray-900 dark:text-white truncate">
+                    John Doe
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                    john@example.com
+                  </p>
+                </div>
+              )}
+              {/* Tooltip for collapsed state */}
+              {!isSidebarOpen && !isMobile && (
+                <div className="hidden group-hover:block absolute left-full pl-3 ml-0 bottom-0 z-50">
+                  <div className="bg-gray-900 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
+                    John Doe
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -75,9 +131,9 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div
-        className={`${
-          isSidebarOpen ? 'ml-64' : 'ml-0'
-        } transition-margin duration-300`}
+        className={`transition-all duration-300 ${
+          isSidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
+        }`}
       >
         {/* Header */}
         <header className="bg-white dark:bg-gray-800 shadow-sm">
@@ -85,6 +141,7 @@ export default function Dashboard() {
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+              aria-label={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
             >
               <svg
                 className="w-6 h-6 text-gray-700 dark:text-gray-200"
