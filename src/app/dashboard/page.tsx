@@ -40,7 +40,7 @@ export default function Dashboard() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-40 h-screen transition-all duration-300 
+        className={`fixed top-0 left-0 z-40 h-screen transition-all duration-300 overflow-hidden
           ${isSidebarOpen ? 'w-64' : 'w-16'} 
           ${
             isMobile
@@ -54,8 +54,12 @@ export default function Dashboard() {
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <Link href="/dashboard" className="flex items-center space-x-3">
-              <div className={`${!isSidebarOpen && 'mx-auto'}`}>
+            <Link href="/dashboard" className="flex items-center">
+              <div
+                className={`${
+                  !isSidebarOpen ? 'w-full flex justify-center' : ''
+                }`}
+              >
                 <Image
                   src="/story.webp"
                   alt="TwistTale Logo"
@@ -65,7 +69,7 @@ export default function Dashboard() {
                 />
               </div>
               {isSidebarOpen && (
-                <span className="text-xl font-semibold text-gray-900 dark:text-white truncate">
+                <span className="ml-3 text-xl font-semibold text-gray-900 dark:text-white truncate">
                   TwistTale
                 </span>
               )}
@@ -73,22 +77,26 @@ export default function Dashboard() {
           </div>
 
           {/* Navigation Items */}
-          <nav className="flex-1 p-4 space-y-2 overflow-hidden">
+          <nav className="flex-1 p-4 space-y-2">
             {navigationItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
                 className="flex items-center min-h-[48px] px-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group relative"
               >
-                <span className={`text-xl ${!isSidebarOpen && 'mx-auto'}`}>
-                  {item.icon}
-                </span>
+                <div
+                  className={`${
+                    !isSidebarOpen ? 'w-full flex justify-center' : ''
+                  }`}
+                >
+                  <span className="text-xl">{item.icon}</span>
+                </div>
                 {isSidebarOpen && (
                   <span className="ml-3 truncate">{item.name}</span>
                 )}
                 {/* Tooltip for collapsed state */}
                 {!isSidebarOpen && !isMobile && (
-                  <div className="hidden group-hover:block absolute left-full pl-3 ml-0 z-50">
+                  <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 invisible group-hover:visible">
                     <div className="bg-gray-900 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
                       {item.name}
                     </div>
@@ -102,10 +110,12 @@ export default function Dashboard() {
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3 group relative min-h-[40px]">
               <div
-                className={`w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex-shrink-0 ${
-                  !isSidebarOpen && 'mx-auto'
+                className={`${
+                  !isSidebarOpen ? 'w-full flex justify-center' : ''
                 }`}
-              />
+              >
+                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex-shrink-0" />
+              </div>
               {isSidebarOpen && (
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-gray-900 dark:text-white truncate">
@@ -118,7 +128,7 @@ export default function Dashboard() {
               )}
               {/* Tooltip for collapsed state */}
               {!isSidebarOpen && !isMobile && (
-                <div className="hidden group-hover:block absolute left-full pl-3 ml-0 bottom-0 z-50">
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 invisible group-hover:visible">
                   <div className="bg-gray-900 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
                     John Doe
                   </div>
