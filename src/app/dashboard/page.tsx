@@ -82,25 +82,23 @@ export default function Dashboard() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="flex items-center min-h-[48px] px-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group relative"
+                className="flex items-center min-h-[48px] px-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group relative w-full overflow-visible"
               >
                 <div
                   className={`${
                     !isSidebarOpen ? 'w-full flex justify-center' : ''
                   }`}
                 >
-                  <span className="text-xl">{item.icon}</span>
+                  <span className="text-xl relative z-10">{item.icon}</span>
                 </div>
-                {isSidebarOpen && (
+                {isSidebarOpen ? (
                   <span className="ml-3 truncate">{item.name}</span>
-                )}
-                {/* Tooltip for collapsed state */}
-                {!isSidebarOpen && !isMobile && (
-                  <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 invisible group-hover:visible">
-                    <div className="bg-gray-900 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
+                ) : (
+                  !isMobile && (
+                    <div className="fixed z-50 left-[4.5rem] top-auto bg-gray-900 text-white px-2 py-1 rounded text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none">
                       {item.name}
                     </div>
-                  </div>
+                  )
                 )}
               </Link>
             ))}
@@ -108,15 +106,15 @@ export default function Dashboard() {
 
           {/* User Profile Section */}
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center space-x-3 group relative min-h-[40px]">
+            <div className="flex items-center space-x-3 group relative min-h-[40px] w-full overflow-visible">
               <div
                 className={`${
                   !isSidebarOpen ? 'w-full flex justify-center' : ''
                 }`}
               >
-                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex-shrink-0" />
+                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex-shrink-0 relative z-10" />
               </div>
-              {isSidebarOpen && (
+              {isSidebarOpen ? (
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-gray-900 dark:text-white truncate">
                     John Doe
@@ -125,14 +123,12 @@ export default function Dashboard() {
                     john@example.com
                   </p>
                 </div>
-              )}
-              {/* Tooltip for collapsed state */}
-              {!isSidebarOpen && !isMobile && (
-                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 invisible group-hover:visible">
-                  <div className="bg-gray-900 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
+              ) : (
+                !isMobile && (
+                  <div className="fixed z-50 left-[4.5rem] top-auto bg-gray-900 text-white px-2 py-1 rounded text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none">
                     John Doe
                   </div>
-                </div>
+                )
               )}
             </div>
           </div>
