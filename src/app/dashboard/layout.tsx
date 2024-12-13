@@ -14,7 +14,7 @@ import {
   Menu,
   ChevronRight,
   Feather,
-  UserCircle,
+  LogOut,
 } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
 import { useRouter } from 'next/navigation';
@@ -35,7 +35,7 @@ export default function DashboardLayout({
   const [isMobile, setIsMobile] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
-  const { user, isLoading } = useUser();
+  const { user, isLoading, setUser } = useUser();
   const router = useRouter();
 
   useEffect(() => {
@@ -52,6 +52,11 @@ export default function DashboardLayout({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const handleLogout = () => {
+    setUser(null);
+    router.push('/signin');
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -164,25 +169,28 @@ export default function DashboardLayout({
                 isSidebarOpen ? 'space-x-3' : 'justify-center'
               }`}
             >
-              <div className="relative z-10">
-                <UserCircle
-                  className="w-10 h-10 text-gray-500 dark:text-gray-400"
+              <button
+                onClick={handleLogout}
+                className="relative z-10 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <LogOut
+                  className="w-6 h-6 text-gray-500 dark:text-gray-400"
                   strokeWidth={1.5}
                 />
-              </div>
+              </button>
               {isSidebarOpen ? (
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-gray-900 dark:text-white truncate">
-                    John Doe
+                    {user?.name}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                    john@example.com
+                    {user?.email}
                   </p>
                 </div>
               ) : (
                 !isMobile && (
                   <div className="fixed z-50 left-[4.5rem] top-auto bg-gray-900 text-white px-2 py-1 rounded text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none">
-                    John Doe
+                    Logout
                   </div>
                 )
               )}

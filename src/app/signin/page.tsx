@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/components/theme-provider';
 import { Feather } from 'lucide-react';
@@ -11,7 +11,21 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
-  const { setUser } = useUser();
+  const { setUser, user, isLoading } = useUser();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (user) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
