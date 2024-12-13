@@ -1,9 +1,9 @@
-const db = require('./db');
+import { sql } from './db';
 
-const createTables = async () => {
+export const createTables = async () => {
   try {
     // Users table
-    await db.sql`
+    await sql`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         email VARCHAR(255) UNIQUE NOT NULL,
@@ -14,7 +14,7 @@ const createTables = async () => {
     `;
 
     // Stories table
-    await db.sql`
+    await sql`
       CREATE TABLE IF NOT EXISTS stories (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -27,7 +27,7 @@ const createTables = async () => {
     `;
 
     // Story messages table (for chat history)
-    await db.sql`
+    await sql`
       CREATE TABLE IF NOT EXISTS story_messages (
         id SERIAL PRIMARY KEY,
         story_id INTEGER REFERENCES stories(id),

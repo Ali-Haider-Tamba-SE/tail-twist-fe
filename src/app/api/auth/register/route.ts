@@ -24,9 +24,14 @@ export async function POST(request: Request) {
         name: user.name,
       },
     });
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     // Check for unique constraint violation
-    if (error.code === '23505') {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === '23505'
+    ) {
       return NextResponse.json(
         { success: false, error: 'Email already exists' },
         { status: 409 }

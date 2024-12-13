@@ -49,8 +49,8 @@ export default function SignIn() {
         // Handle Sign In
         // Implement your sign-in logic here
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error: Error | unknown) {
+      setError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
