@@ -27,7 +27,9 @@ export default function NewTale() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [userInput, setUserInput] = useState('');
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = (
+    e: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>
+  ) => {
     e.preventDefault();
     if (!userInput.trim()) return;
 
@@ -53,6 +55,14 @@ export default function NewTale() {
 
     setMessages([...messages, newUserMessage, botResponse]);
     setUserInput('');
+  };
+
+  const handleChoiceClick = (choice: string) => {
+    setUserInput(choice);
+    handleSendMessage({
+      preventDefault: () => {},
+      type: 'submit',
+    } as React.FormEvent<HTMLFormElement>);
   };
 
   return (
@@ -85,10 +95,7 @@ export default function NewTale() {
                   {message.choices.map((choice, index) => (
                     <button
                       key={index}
-                      onClick={() => {
-                        setUserInput(choice);
-                        handleSendMessage(new Event('submit') as any);
-                      }}
+                      onClick={() => handleChoiceClick(choice)}
                       className="block w-full text-left px-3 py-2 text-sm rounded-md bg-white dark:bg-gray-600 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors"
                     >
                       {choice}
