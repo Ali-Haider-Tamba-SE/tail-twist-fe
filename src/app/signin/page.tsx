@@ -1,16 +1,65 @@
 'use client';
 import { useState } from 'react';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useTheme } from '@/components/theme-provider';
 import { Feather } from 'lucide-react';
 
 export default function SignIn() {
   const [isSignIn, setIsSignIn] = useState(true);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const name = formData.get('name') as string;
+
+    try {
+      if (!isSignIn) {
+        // Handle Registration
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            name,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to register');
+        }
+
+        // Automatically sign in after registration
+        // You might want to implement your sign-in logic here
+        router.push('/dashboard');
+      } else {
+        // Handle Sign In
+        // Implement your sign-in logic here
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="max-w-md w-full space-y-8 p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+        {/* Logo and Title */}
         <div className="flex flex-col items-center">
           <div className="w-20 h-20 relative mb-4 flex items-center justify-center">
             <Feather
@@ -23,9 +72,29 @@ export default function SignIn() {
           </h2>
         </div>
 
-        <form className="mt-8 space-y-6" action="#" method="POST">
-          <input type="hidden" name="remember" value="true" />
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/50 text-red-500 dark:text-red-200 p-3 rounded-md text-sm">
+            {error}
+          </div>
+        )}
+
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
+            {!isSignIn && (
+              <div>
+                <label htmlFor="name" className="sr-only">
+                  Name
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  required={!isSignIn}
+                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="Full name"
+                />
+              </div>
+            )}
             <div>
               <label htmlFor="email-address" className="sr-only">
                 Email address
@@ -54,58 +123,15 @@ export default function SignIn() {
                 placeholder="Password"
               />
             </div>
-            {!isSignIn && (
-              <div>
-                <label htmlFor="confirm-password" className="sr-only">
-                  Confirm Password
-                </label>
-                <input
-                  id="confirm-password"
-                  name="confirm-password"
-                  type="password"
-                  required
-                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                  placeholder="Confirm Password"
-                />
-              </div>
-            )}
           </div>
-
-          {isSignIn && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-900 dark:text-gray-200"
-                >
-                  Remember me
-                </label>
-              </div>
-
-              <div className="text-sm">
-                <a
-                  href="#"
-                  className="font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                  Forgot your password?
-                </a>
-              </div>
-            </div>
-          )}
 
           <div>
             <button
-              onClick={() => redirect('/dashboard')}
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSignIn ? 'Sign in' : 'Sign up'}
+              {loading ? 'Processing...' : isSignIn ? 'Sign in' : 'Sign up'}
             </button>
           </div>
         </form>
