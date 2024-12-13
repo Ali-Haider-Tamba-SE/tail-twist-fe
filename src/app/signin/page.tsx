@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/components/theme-provider';
 import { Feather } from 'lucide-react';
+import { useUser } from '@/contexts/user-context';
 
 export default function SignIn() {
   const [isSignIn, setIsSignIn] = useState(true);
@@ -10,6 +11,7 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
+  const { setUser } = useUser();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -43,11 +45,29 @@ export default function SignIn() {
         }
 
         // Automatically sign in after registration
-        // You might want to implement your sign-in logic here
+        setUser(data.user);
         router.push('/dashboard');
       } else {
         // Handle Sign In
-        // Implement your sign-in logic here
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to sign in');
+        }
+
+        setUser(data.user);
+        router.push('/dashboard');
       }
     } catch (error: Error | unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred');

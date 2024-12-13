@@ -16,6 +16,8 @@ import {
   Feather,
   UserCircle,
 } from 'lucide-react';
+import { useUser } from '@/contexts/user-context';
+import { useRouter } from 'next/navigation';
 
 const navigationItems = [
   { name: 'Home', href: '/dashboard', icon: Home },
@@ -33,6 +35,14 @@ export default function DashboardLayout({
   const [isMobile, setIsMobile] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
+  const { user, isLoading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/signin');
+    }
+  }, [user, isLoading, router]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -42,6 +52,14 @@ export default function DashboardLayout({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
