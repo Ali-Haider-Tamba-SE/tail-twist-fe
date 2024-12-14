@@ -1,8 +1,8 @@
 'use client';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Sparkles, BookOpen } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 type Message = {
   id: number;
@@ -20,34 +20,50 @@ export default function NewTale() {
   const router = useRouter();
   const [messageCount, setMessageCount] = useState(0);
   const initRef = useRef(false);
+  const searchParams = useSearchParams();
+  const continueStoryId = searchParams.get('storyId');
 
   const startNewStory = useCallback(async () => {
     if (!user || storyId || initRef.current) return;
     initRef.current = true;
     setIsLoading(true);
     try {
-      const response = await fetch('/api/story/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id,
-        }),
-      });
+      if (continueStoryId) {
+        const response = await fetch(
+          `/api/stories/${continueStoryId}/messages`
+        );
+        const data = await response.json();
+        if (response.ok) {
+          setStoryId(parseInt(continueStoryId));
+          setMessages(data.messages);
+          setMessageCount(
+            data.messages.filter((m: Message) => !m.isBot).length
+          );
+        }
+      } else {
+        const response = await fetch('/api/story/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: user.id,
+          }),
+        });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
 
-      setStoryId(data.story.id);
-      setMessages([data.message]);
+        setStoryId(data.story.id);
+        setMessages([data.message]);
+      }
     } catch (error) {
-      console.error('Failed to start story:', error);
-      initRef.current = false; // Reset on error
+      console.error('Failed to start/continue story:', error);
+      initRef.current = false;
     } finally {
       setIsLoading(false);
     }
-  }, [user, storyId]);
+  }, [user, storyId, continueStoryId]);
 
   useEffect(() => {
     startNewStory();
@@ -107,7 +123,8 @@ export default function NewTale() {
   // Rest of your component JSX remains the same, but add loading state handling
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h1 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
+      <h1 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+        <BookOpen className="w-6 h-6" />
         Interactive Tale
       </h1>
 
@@ -147,8 +164,9 @@ export default function NewTale() {
           </div>
         ))}
         {isLoading && (
-          <div className="flex justify-center">
-            <div className="animate-pulse text-gray-500 dark:text-gray-400">
+          <div className="flex justify-center items-center space-x-2">
+            <Sparkles className="w-5 h-5 text-indigo-500 animate-pulse" />
+            <div className="text-gray-500 dark:text-gray-400">
               Generating story...
             </div>
           </div>

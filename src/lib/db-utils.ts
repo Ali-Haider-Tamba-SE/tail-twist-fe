@@ -76,3 +76,12 @@ export async function updateStoryStatus(
   `;
   return result.rows[0];
 }
+
+export async function getStoryStatus(storyId: number) {
+  const result = await sql`
+    SELECT status
+    FROM stories
+    WHERE id = ${storyId}
+  `;
+  return result.rows[0];
+}

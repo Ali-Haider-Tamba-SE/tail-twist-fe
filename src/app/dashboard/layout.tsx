@@ -6,15 +6,15 @@ import { useTheme } from '@/components/theme-provider';
 import {
   Home,
   BookOpen,
-  PenTool,
+  Feather,
   Settings,
   Bell,
   Sun,
   Moon,
   Menu,
   ChevronRight,
-  Feather,
   LogOut,
+  ScrollText,
 } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
 import { useRouter } from 'next/navigation';
@@ -22,7 +22,7 @@ import { useRouter } from 'next/navigation';
 const navigationItems = [
   { name: 'Home', href: '/dashboard', icon: Home },
   { name: 'Stories', href: '/dashboard/stories', icon: BookOpen },
-  { name: 'New Tale', href: '/dashboard/new-tale', icon: PenTool },
+  { name: 'New Tale', href: '/dashboard/new-tale', icon: ScrollText },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 

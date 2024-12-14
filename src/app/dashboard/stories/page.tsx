@@ -11,6 +11,7 @@ export default function Stories() {
     id: number;
     title: string;
     messages: Message[];
+    status: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useUser();
@@ -43,6 +44,7 @@ export default function Stories() {
           id: storyId,
           title,
           messages: data.messages,
+          status: data.status,
         });
       }
     } catch (error) {
@@ -95,6 +97,8 @@ export default function Stories() {
           onClose={() => setSelectedStory(null)}
           title={selectedStory.title}
           messages={selectedStory.messages}
+          status={selectedStory.status}
+          storyId={selectedStory.id}
         />
       )}
     </div>
