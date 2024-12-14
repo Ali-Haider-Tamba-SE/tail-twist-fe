@@ -27,21 +27,22 @@ export async function saveStoryMessage(
   storyId: number,
   content: string,
   isBot: boolean,
-  choices?: string[]
+  choices?: string[],
+  imageUrl?: string
 ) {
   const result = await sql`
-    INSERT INTO story_messages (story_id, content, is_bot, choices)
+    INSERT INTO story_messages (story_id, content, is_bot, choices, image_url)
     VALUES (${storyId}, ${content}, ${isBot}, ${
     choices ? JSON.stringify(choices) : null
-  })
-    RETURNING id, content, is_bot, choices;
+  }, ${imageUrl})
+    RETURNING id, content, is_bot, choices, image_url;
   `;
   return result.rows[0];
 }
 
 export async function getStoryMessages(storyId: number): Promise<Message[]> {
   const result = await sql`
-    SELECT id, content, is_bot, choices
+    SELECT id, content, is_bot, choices, image_url
     FROM story_messages
     WHERE story_id = ${storyId}
     ORDER BY created_at ASC;
@@ -51,6 +52,7 @@ export async function getStoryMessages(storyId: number): Promise<Message[]> {
     content: row.content,
     isBot: row.is_bot,
     choices: row.choices,
+    imageUrl: row.image_url,
   }));
 }
 

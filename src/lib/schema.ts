@@ -34,6 +34,7 @@ export const createTables = async () => {
         content TEXT NOT NULL,
         is_bot BOOLEAN DEFAULT false,
         choices JSONB,
+        image_url TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `;

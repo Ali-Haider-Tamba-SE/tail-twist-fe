@@ -3,6 +3,7 @@ export type Message = {
   content: string;
   isBot: boolean;
   choices?: string[];
+  imageUrl?: string;
 };
 
 export type Story = {

@@ -7,8 +7,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 type Message = {
   id: number;
   content: string;
-  isBot: boolean;
+  is_bot: boolean;
   choices?: string[];
+  image_url?: string;
 };
 
 export default function NewTale() {
@@ -33,11 +34,12 @@ export default function NewTale() {
           `/api/stories/${continueStoryId}/messages`
         );
         const data = await response.json();
+        console.log('Continuing story, received data:', data);
         if (response.ok) {
           setStoryId(parseInt(continueStoryId));
           setMessages(data.messages);
           setMessageCount(
-            data.messages.filter((m: Message) => !m.isBot).length
+            data.messages.filter((m: Message) => !m.is_bot).length
           );
         }
       } else {
@@ -52,6 +54,7 @@ export default function NewTale() {
         });
 
         const data = await response.json();
+        console.log('New story generated, received data:', data);
         if (!response.ok) throw new Error(data.error);
 
         setStoryId(data.story.id);
@@ -68,6 +71,10 @@ export default function NewTale() {
   useEffect(() => {
     startNewStory();
   }, [startNewStory]);
+
+  useEffect(() => {
+    console.log('Current messages:', messages);
+  }, [messages]);
 
   const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -94,13 +101,16 @@ export default function NewTale() {
       });
 
       const data = await response.json();
+      console.log('Message response data:', data);
       if (!response.ok) throw new Error(data.error);
 
-      setMessages((prev) => [
-        ...prev,
-        { id: prev.length + 1, content: userMessage, isBot: false },
+      const newMessages = [
+        ...messages,
+        { id: messages.length + 1, content: userMessage, is_bot: false },
         data.message,
-      ]);
+      ];
+      console.log('Setting new messages:', newMessages);
+      setMessages(newMessages);
 
       if (data.isComplete) {
         setTimeout(() => {
@@ -129,40 +139,63 @@ export default function NewTale() {
       </h1>
 
       {/* Chat/Story Area */}
-      <div className="space-y-6 mb-6 h-[calc(100vh-300px)] overflow-y-auto">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${
-              message.isBot ? 'justify-end' : 'justify-start'
-            }`}
-          >
+      <div className="space-y-6 mb-6 h-[calc(100vh-300px)] overflow-y-auto p-4">
+        {messages.map((message) => {
+          console.log('Rendering message:', message);
+          return (
             <div
-              className={`max-w-[80%] rounded-lg p-4 ${
-                message.isBot
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-indigo-50 dark:bg-gray-700 text-gray-900 dark:text-white'
+              key={message.id}
+              className={`flex ${
+                message.is_bot ? 'justify-start' : 'justify-end'
               }`}
             >
-              <p className="text-sm">{message.content}</p>
-
-              {/* Choice Buttons */}
-              {message.choices && (
-                <div className="mt-4 space-y-2">
-                  {message.choices.map((choice, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleChoiceClick(choice)}
-                      className="block w-full text-left px-3 py-2 text-sm rounded-md bg-white dark:bg-gray-600 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors"
-                    >
-                      {choice}
-                    </button>
-                  ))}
+              <div
+                className={`max-w-[80%] rounded-lg p-4 ${
+                  message.is_bot
+                    ? 'bg-indigo-50 dark:bg-gray-700 text-gray-900 dark:text-white'
+                    : 'bg-indigo-600 text-white'
+                }`}
+              >
+                {message.is_bot && message.image_url && (
+                  <div className="mb-4">
+                    <img
+                      src={message.image_url}
+                      alt="Story illustration"
+                      className="w-full rounded-lg shadow-lg"
+                      onError={(e) => {
+                        console.error(
+                          'Image failed to load:',
+                          message.image_url
+                        );
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="text-sm whitespace-pre-wrap">
+                  {message.content}
                 </div>
-              )}
+
+                {message.is_bot &&
+                  message.choices &&
+                  Array.isArray(message.choices) &&
+                  message.choices.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {message.choices.map((choice, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleChoiceClick(choice)}
+                          className="block w-full text-left px-3 py-2 text-sm rounded-md bg-white dark:bg-gray-600 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors"
+                        >
+                          {choice}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {isLoading && (
           <div className="flex justify-center items-center space-x-2">
             <Sparkles className="w-5 h-5 text-indigo-500 animate-pulse" />

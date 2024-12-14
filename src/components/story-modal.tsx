@@ -49,8 +49,15 @@ export default function StoryModal({
           {botMessages.map((message, index) => (
             <div
               key={message.id + index}
-              className="prose dark:prose-invert max-w-none"
+              className="prose dark:prose-invert max-w-none space-y-4"
             >
+              {message.imageUrl && (
+                <img
+                  src={message.imageUrl}
+                  alt="Story illustration"
+                  className="w-full rounded-lg shadow-lg max-w-md mx-auto"
+                />
+              )}
               <p>{message.content}</p>
             </div>
           ))}
