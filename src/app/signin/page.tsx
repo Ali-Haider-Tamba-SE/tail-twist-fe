@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/components/theme-provider';
-import { Feather } from 'lucide-react';
+import { Feather, AlertCircle } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
 
 export default function SignIn() {
@@ -107,8 +107,9 @@ export default function SignIn() {
         </div>
 
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/50 text-red-500 dark:text-red-200 p-3 rounded-md text-sm">
-            {error}
+          <div className="bg-red-50 dark:bg-red-900/50 text-red-500 dark:text-red-200 p-3 rounded-md text-sm flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
