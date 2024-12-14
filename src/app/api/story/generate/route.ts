@@ -26,6 +26,10 @@ export async function POST(request: Request) {
     const storyResponse = await generateStoryPrompt(userInput, messageCount);
     console.log('Story response:', storyResponse);
 
+    if (!storyResponse.content) {
+      throw new Error('No content generated for the story');
+    }
+
     // Ensure choices exist for non-ending messages
     if (!storyResponse.choices && messageCount < 4) {
       storyResponse.choices = [
@@ -89,7 +93,11 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Story generation error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to generate story' },
+      {
+        success: false,
+        error:
+          error instanceof Error ? error.message : 'Failed to generate story',
+      },
       { status: 500 }
     );
   }

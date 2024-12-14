@@ -26,15 +26,23 @@ export async function createStory(userId: number, title: string) {
 export async function saveStoryMessage(
   storyId: number,
   content: string,
-  isBot: boolean,
+  is_bot: boolean,
   choices?: string[],
   imageUrl?: string
 ) {
+  if (!content) {
+    throw new Error('Content is required for story messages');
+  }
+
   const result = await sql`
     INSERT INTO story_messages (story_id, content, is_bot, choices, image_url)
-    VALUES (${storyId}, ${content}, ${isBot}, ${
-    choices ? JSON.stringify(choices) : null
-  }, ${imageUrl})
+    VALUES (
+      ${storyId}, 
+      ${content}, 
+      ${is_bot}, 
+      ${choices ? JSON.stringify(choices) : null}, 
+      ${imageUrl}
+    )
     RETURNING id, content, is_bot, choices, image_url;
   `;
   return result.rows[0];
@@ -42,17 +50,25 @@ export async function saveStoryMessage(
 
 export async function getStoryMessages(storyId: number): Promise<Message[]> {
   const result = await sql`
-    SELECT id, content, is_bot, choices, image_url
+    SELECT 
+      id, 
+      content, 
+      is_bot,
+      choices,
+      image_url
     FROM story_messages
     WHERE story_id = ${storyId}
     ORDER BY created_at ASC;
   `;
+
+  console.log('Database result:', result.rows); // Debug log
+
   return result.rows.map((row) => ({
     id: row.id,
     content: row.content,
-    isBot: row.is_bot,
+    is_bot: row.is_bot,
     choices: row.choices,
-    imageUrl: row.image_url,
+    image_url: row.image_url,
   }));
 }
 

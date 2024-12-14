@@ -35,12 +35,23 @@ export default function NewTale() {
         );
         const data = await response.json();
         console.log('Continuing story, received data:', data);
+
         if (response.ok) {
           setStoryId(parseInt(continueStoryId));
-          setMessages(data.messages);
+          const formattedMessages = data.messages.map((msg: Message) => ({
+            id: msg.id,
+            content: msg.content,
+            is_bot: msg.is_bot,
+            choices: msg.choices,
+            image_url: msg.image_url,
+          }));
+          setMessages(formattedMessages);
           setMessageCount(
-            data.messages.filter((m: Message) => !m.is_bot).length
+            formattedMessages.filter((m: Message) => !m.is_bot).length
           );
+
+          const lastMessage = formattedMessages[formattedMessages.length - 1];
+          console.log('Last message of continued story:', lastMessage);
         }
       } else {
         const response = await fetch('/api/story/generate', {
@@ -74,6 +85,13 @@ export default function NewTale() {
 
   useEffect(() => {
     console.log('Current messages:', messages);
+  }, [messages]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      console.log('Current messages state:', messages);
+      console.log('Last message:', messages[messages.length - 1]);
+    }
   }, [messages]);
 
   const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {

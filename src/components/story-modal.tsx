@@ -23,11 +23,14 @@ export default function StoryModal({
   const router = useRouter();
   if (!isOpen) return null;
 
-  const botMessages = messages.filter((message) => message.isBot);
+  const botMessages = messages.filter((message) => message.is_bot);
 
   const handleContinue = () => {
+    const lastMessage = messages[messages.length - 1];
     onClose();
-    router.push(`/dashboard/new-tale?storyId=${storyId}`);
+    router.push(
+      `/dashboard/new-tale?storyId=${storyId}&lastMessageId=${lastMessage.id}`
+    );
   };
 
   return (
@@ -51,14 +54,20 @@ export default function StoryModal({
               key={message.id + index}
               className="prose dark:prose-invert max-w-none space-y-4"
             >
-              {message.imageUrl && (
+              {message.image_url && (
                 <img
-                  src={message.imageUrl}
+                  src={message.image_url}
                   alt="Story illustration"
                   className="w-full rounded-lg shadow-lg max-w-md mx-auto"
+                  onError={(e) => {
+                    console.error('Image failed to load:', message.image_url);
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
               )}
-              <p>{message.content}</p>
+              <div className="text-sm whitespace-pre-wrap">
+                {message.content}
+              </div>
             </div>
           ))}
         </div>

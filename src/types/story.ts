@@ -1,9 +1,9 @@
 export type Message = {
   id: number;
   content: string;
-  isBot: boolean;
+  is_bot: boolean;
   choices?: string[];
-  imageUrl?: string;
+  image_url?: string;
 };
 
 export type Story = {

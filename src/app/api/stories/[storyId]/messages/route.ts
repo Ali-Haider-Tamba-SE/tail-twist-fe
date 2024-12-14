@@ -3,7 +3,6 @@ import { getStoryMessages, getStoryStatus } from '@/lib/db-utils';
 
 export async function GET(request: NextRequest) {
   try {
-    // Extract storyId from URL pattern
     const storyId = request.url.split('/stories/')[1].split('/')[0];
     const parsedStoryId = parseInt(storyId, 10);
 
@@ -19,9 +18,17 @@ export async function GET(request: NextRequest) {
       getStoryStatus(parsedStoryId),
     ]);
 
+    console.log('Retrieved messages:', messages); // Debug log
+
     return NextResponse.json({
       success: true,
-      messages,
+      messages: messages.map((msg) => ({
+        id: msg.id,
+        content: msg.content,
+        is_bot: msg.is_bot,
+        choices: msg.choices,
+        image_url: msg.image_url,
+      })),
       status: status.status,
     });
   } catch (error) {
