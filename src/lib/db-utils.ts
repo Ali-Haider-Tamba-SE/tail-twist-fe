@@ -63,3 +63,16 @@ export async function getUserStories(userId: number) {
   `;
   return result.rows;
 }
+
+export async function updateStoryStatus(
+  storyId: number,
+  status: 'in_progress' | 'completed'
+) {
+  const result = await sql`
+    UPDATE stories
+    SET status = ${status}
+    WHERE id = ${storyId}
+    RETURNING id, status;
+  `;
+  return result.rows[0];
+}

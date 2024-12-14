@@ -36,7 +36,7 @@ export default function StoryModal({
         <div className="p-4 overflow-y-auto max-h-[calc(80vh-8rem)] space-y-4">
           {botMessages.map((message, index) => (
             <div
-              key={message.id}
+              key={message.id + index}
               className="prose dark:prose-invert max-w-none"
             >
               <p>{message.content}</p>

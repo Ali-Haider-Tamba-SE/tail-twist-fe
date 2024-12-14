@@ -1,7 +1,8 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Send } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
+import { useRouter } from 'next/navigation';
 
 type Message = {
   id: number;
@@ -15,11 +16,14 @@ export default function NewTale() {
   const [userInput, setUserInput] = useState('');
   const [storyId, setStoryId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
   const { user } = useUser();
+  const router = useRouter();
+  const [messageCount, setMessageCount] = useState(0);
+  const initRef = useRef(false);
 
   const startNewStory = useCallback(async () => {
-    if (!user || isInitialized) return;
+    if (!user || storyId || initRef.current) return;
+    initRef.current = true;
     setIsLoading(true);
     try {
       const response = await fetch('/api/story/generate', {
@@ -37,13 +41,13 @@ export default function NewTale() {
 
       setStoryId(data.story.id);
       setMessages([data.message]);
-      setIsInitialized(true);
     } catch (error) {
       console.error('Failed to start story:', error);
+      initRef.current = false; // Reset on error
     } finally {
       setIsLoading(false);
     }
-  }, [user, isInitialized]);
+  }, [user, storyId]);
 
   useEffect(() => {
     startNewStory();
@@ -56,6 +60,8 @@ export default function NewTale() {
     const userMessage = userInput;
     setUserInput('');
     setIsLoading(true);
+    const currentCount = messageCount + 1;
+    setMessageCount(currentCount);
 
     try {
       const response = await fetch('/api/story/generate', {
@@ -67,6 +73,7 @@ export default function NewTale() {
           userId: user.id,
           storyId,
           userInput: userMessage,
+          messageCount: currentCount,
         }),
       });
 
@@ -78,6 +85,12 @@ export default function NewTale() {
         { id: prev.length + 1, content: userMessage, isBot: false },
         data.message,
       ]);
+
+      if (data.isComplete) {
+        setTimeout(() => {
+          router.push('/dashboard/stories');
+        }, 3000);
+      }
     } catch (error) {
       console.error('Failed to continue story:', error);
     } finally {

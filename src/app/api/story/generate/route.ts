@@ -1,17 +1,29 @@
 import { NextResponse } from 'next/server';
 import { generateStoryPrompt } from '@/lib/openai';
-import { createStory, saveStoryMessage } from '@/lib/db-utils';
+import {
+  createStory,
+  saveStoryMessage,
+  updateStoryStatus,
+} from '@/lib/db-utils';
 
 export async function POST(request: Request) {
   try {
-    const { userId, userInput, storyId } = await request.json();
+    const {
+      userId,
+      userInput,
+      storyId,
+      messageCount = 0,
+    } = await request.json();
 
     // Generate story content
-    const storyResponse = await generateStoryPrompt(userInput);
+    const storyResponse = await generateStoryPrompt(userInput, messageCount);
 
     if (!storyId) {
       // Create new story if storyId is not provided
-      const story = await createStory(userId, 'New Interactive Tale');
+      const story = await createStory(
+        userId,
+        storyResponse.title || 'New Interactive Tale'
+      );
       const message = await saveStoryMessage(
         story.id,
         storyResponse.content,
@@ -37,9 +49,15 @@ export async function POST(request: Request) {
         storyResponse.choices
       );
 
+      // If this is the final message, update story status
+      if (messageCount >= 4) {
+        await updateStoryStatus(storyId, 'completed');
+      }
+
       return NextResponse.json({
         success: true,
         message,
+        isComplete: messageCount >= 4,
       });
     }
   } catch (error) {

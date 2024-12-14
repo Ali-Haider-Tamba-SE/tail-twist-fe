@@ -8,10 +8,15 @@ export const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export const generateStoryPrompt = async (userInput?: string) => {
-  const systemPrompt = userInput
-    ? "Continue the story based on the user's choice. Provide 3 options for the next part."
-    : 'Start an engaging interactive story. Provide 3 options for what happens next.';
+export const generateStoryPrompt = async (
+  userInput?: string,
+  messageCount = 0
+) => {
+  const systemPrompt = !userInput
+    ? 'Start an engaging interactive story. Give it a creative title. Provide 3 options for what happens next.'
+    : messageCount >= 4
+    ? "Conclude the story with a satisfying ending based on the user's choice. No options needed."
+    : "Continue the story based on the user's choice. Provide 3 options for the next part.";
 
   const response = await openai.chat.completions.create({
     model: 'gpt-3.5-turbo',
@@ -28,10 +33,15 @@ export const generateStoryPrompt = async (userInput?: string) => {
     functions: [
       {
         name: 'formatStoryResponse',
-        description: 'Format the story response with content and choices',
+        description:
+          'Format the story response with content, choices, and title',
         parameters: {
           type: 'object',
           properties: {
+            title: {
+              type: 'string',
+              description: 'The title of the story (only for new stories)',
+            },
             content: {
               type: 'string',
               description: 'The story content',
@@ -41,10 +51,11 @@ export const generateStoryPrompt = async (userInput?: string) => {
               items: {
                 type: 'string',
               },
-              description: 'Three choices for the next part of the story',
+              description:
+                'Three choices for the next part of the story (except for ending)',
             },
           },
-          required: ['content', 'choices'],
+          required: ['content'],
         },
       },
     ],
