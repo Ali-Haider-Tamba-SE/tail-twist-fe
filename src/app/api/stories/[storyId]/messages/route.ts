@@ -1,15 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getStoryMessages, getStoryStatus } from '@/lib/db-utils';
 
-export async function GET(
-  request: Request,
-  { params }: { params: { storyId: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
-    const storyId = parseInt(params.storyId);
+    // Extract storyId from URL pattern
+    const storyId = request.url.split('/stories/')[1].split('/')[0];
+    const parsedStoryId = parseInt(storyId, 10);
+
+    if (isNaN(parsedStoryId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid story ID' },
+        { status: 400 }
+      );
+    }
+
     const [messages, status] = await Promise.all([
-      getStoryMessages(storyId),
-      getStoryStatus(storyId),
+      getStoryMessages(parsedStoryId),
+      getStoryStatus(parsedStoryId),
     ]);
 
     return NextResponse.json({
