@@ -1,4 +1,7 @@
 import { sql, createPool } from '@vercel/postgres';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.local' });
 
 if (!process.env.POSTGRES_URL) {
   console.error('POSTGRES_URL environment variable is not set');
