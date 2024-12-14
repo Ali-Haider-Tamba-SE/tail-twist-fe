@@ -6,23 +6,35 @@ export async function POST(request: Request) {
   try {
     const { messageId, content } = await request.json();
 
-    const imageUrl = await generateStoryImage(content);
+    // Start image generation in background
+    generateImageInBackground(messageId, content);
 
-    if (imageUrl) {
-      // Update the message with the generated image URL
-      await sql`
-        UPDATE story_messages 
-        SET image_url = ${imageUrl}
-        WHERE id = ${messageId}
-      `;
-    }
-
-    return NextResponse.json({ success: true, imageUrl });
+    // Return immediately
+    return NextResponse.json({
+      success: true,
+      message: 'Image generation started',
+    });
   } catch (error) {
     console.error('Image generation error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to generate image' },
       { status: 500 }
     );
+  }
+}
+
+async function generateImageInBackground(messageId: number, content: string) {
+  try {
+    const imageUrl = await generateStoryImage(content);
+
+    if (imageUrl) {
+      await sql`
+        UPDATE story_messages 
+        SET image_url = ${imageUrl}
+        WHERE id = ${messageId}
+      `;
+    }
+  } catch (error) {
+    console.error('Background image generation failed:', error);
   }
 }

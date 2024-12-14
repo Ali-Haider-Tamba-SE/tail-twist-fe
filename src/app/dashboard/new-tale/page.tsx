@@ -102,29 +102,53 @@ export default function NewTale() {
     }
   }, [messages]);
 
+  const checkForImage = async (messageId: number) => {
+    try {
+      const response = await fetch(`/api/messages/${messageId}`);
+      const data = await response.json();
+
+      if (data.image_url) {
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg.id === messageId ? { ...msg, image_url: data.image_url } : msg
+          )
+        );
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to check for image:', error);
+      return false;
+    }
+  };
+
   const generateImage = async (messageId: number, content: string) => {
     try {
       setGeneratingImages((prev) => [...prev, messageId]);
 
-      const response = await fetch('/api/story/generate-image', {
+      // Start image generation
+      await fetch('/api/story/generate-image', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messageId, content }),
       });
 
-      const data = await response.json();
-      if (data.success && data.imageUrl) {
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg.id === messageId ? { ...msg, image_url: data.imageUrl } : msg
-          )
-        );
-      }
+      // Poll for image every 2 seconds
+      const pollInterval = setInterval(async () => {
+        const hasImage = await checkForImage(messageId);
+        if (hasImage) {
+          clearInterval(pollInterval);
+          setGeneratingImages((prev) => prev.filter((id) => id !== messageId));
+        }
+      }, 2000);
+
+      // Stop polling after 30 seconds
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        setGeneratingImages((prev) => prev.filter((id) => id !== messageId));
+      }, 30000);
     } catch (error) {
       console.error('Failed to generate image:', error);
-    } finally {
       setGeneratingImages((prev) => prev.filter((id) => id !== messageId));
     }
   };
