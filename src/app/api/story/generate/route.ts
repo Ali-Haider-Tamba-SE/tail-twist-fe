@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { generateStoryPrompt, generateStoryImage } from '@/lib/openai';
+import { generateStoryPrompt } from '@/lib/openai';
 import {
   createStory,
   saveStoryMessage,
@@ -14,13 +14,6 @@ export async function POST(request: Request) {
       storyId,
       messageCount = 0,
     } = await request.json();
-
-    console.log('Generating story with:', {
-      userId,
-      userInput,
-      storyId,
-      messageCount,
-    });
 
     // Generate story content
     const storyResponse = await generateStoryPrompt(userInput, messageCount);
@@ -39,26 +32,19 @@ export async function POST(request: Request) {
       ];
     }
 
-    // Generate image based on the story content
-    const imageUrl = await generateStoryImage(storyResponse.content);
-    console.log('Generated image URL:', imageUrl);
-
     if (!storyId) {
       // Create new story if storyId is not provided
       const story = await createStory(
         userId,
         storyResponse.title || 'New Interactive Tale'
       );
-      console.log('Created story:', story);
 
       const message = await saveStoryMessage(
         story.id,
         storyResponse.content,
         true,
-        storyResponse.choices,
-        imageUrl as string
+        storyResponse.choices
       );
-      console.log('Saved message:', message);
 
       return NextResponse.json({
         success: true,
@@ -75,11 +61,9 @@ export async function POST(request: Request) {
         storyId,
         storyResponse.content,
         true,
-        storyResponse.choices,
-        imageUrl as string
+        storyResponse.choices
       );
 
-      // If this is the final message, update story status
       if (messageCount >= 4) {
         await updateStoryStatus(storyId, 'completed');
       }

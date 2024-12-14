@@ -23,6 +23,7 @@ export default function NewTale() {
   const initRef = useRef(false);
   const searchParams = useSearchParams();
   const continueStoryId = searchParams.get('storyId');
+  const [generatingImages, setGeneratingImages] = useState<number[]>([]);
 
   const startNewStory = useCallback(async () => {
     if (!user || storyId || initRef.current) return;
@@ -34,7 +35,6 @@ export default function NewTale() {
           `/api/stories/${continueStoryId}/messages`
         );
         const data = await response.json();
-        console.log('Continuing story, received data:', data);
 
         if (response.ok) {
           setStoryId(parseInt(continueStoryId));
@@ -50,8 +50,12 @@ export default function NewTale() {
             formattedMessages.filter((m: Message) => !m.is_bot).length
           );
 
-          const lastMessage = formattedMessages[formattedMessages.length - 1];
-          console.log('Last message of continued story:', lastMessage);
+          // Generate missing images for bot messages
+          formattedMessages.forEach((msg: Message) => {
+            if (msg.is_bot && !msg.image_url) {
+              generateImage(msg.id, msg.content);
+            }
+          });
         }
       } else {
         const response = await fetch('/api/story/generate', {
@@ -70,6 +74,10 @@ export default function NewTale() {
 
         setStoryId(data.story.id);
         setMessages([data.message]);
+
+        if (data.message.is_bot) {
+          generateImage(data.message.id, data.message.content);
+        }
       }
     } catch (error) {
       console.error('Failed to start/continue story:', error);
@@ -93,6 +101,33 @@ export default function NewTale() {
       console.log('Last message:', messages[messages.length - 1]);
     }
   }, [messages]);
+
+  const generateImage = async (messageId: number, content: string) => {
+    try {
+      setGeneratingImages((prev) => [...prev, messageId]);
+
+      const response = await fetch('/api/story/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messageId, content }),
+      });
+
+      const data = await response.json();
+      if (data.success && data.imageUrl) {
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg.id === messageId ? { ...msg, image_url: data.imageUrl } : msg
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Failed to generate image:', error);
+    } finally {
+      setGeneratingImages((prev) => prev.filter((id) => id !== messageId));
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -119,7 +154,6 @@ export default function NewTale() {
       });
 
       const data = await response.json();
-      console.log('Message response data:', data);
       if (!response.ok) throw new Error(data.error);
 
       const newMessages = [
@@ -127,8 +161,11 @@ export default function NewTale() {
         { id: messages.length + 1, content: userMessage, is_bot: false },
         data.message,
       ];
-      console.log('Setting new messages:', newMessages);
       setMessages(newMessages);
+
+      if (data.message.is_bot) {
+        generateImage(data.message.id, data.message.content);
+      }
 
       if (data.isComplete) {
         setTimeout(() => {
@@ -174,20 +211,31 @@ export default function NewTale() {
                     : 'bg-indigo-600 text-white'
                 }`}
               >
-                {message.is_bot && message.image_url && (
+                {message.is_bot && (
                   <div className="mb-4">
-                    <img
-                      src={message.image_url}
-                      alt="Story illustration"
-                      className="w-full rounded-lg shadow-lg"
-                      onError={(e) => {
-                        console.error(
-                          'Image failed to load:',
-                          message.image_url
-                        );
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
+                    {message.image_url ? (
+                      <img
+                        src={message.image_url}
+                        alt="Story illustration"
+                        className="w-full rounded-lg shadow-lg"
+                        onError={(e) => {
+                          console.error(
+                            'Image failed to load:',
+                            message.image_url
+                          );
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : generatingImages.includes(message.id) ? (
+                      <div className="w-full h-48 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                        <div className="flex flex-col items-center space-y-2">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            Generating image...
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 )}
                 <div className="text-sm whitespace-pre-wrap">
