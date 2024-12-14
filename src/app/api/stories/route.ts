@@ -1,26 +1,24 @@
 import { NextResponse } from 'next/server';
-import { createStory, saveStoryMessage } from '@/lib/db-utils';
+import { getUserStories } from '@/lib/db-utils';
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   try {
-    const { userId, title, initialMessage } = await request.json();
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
 
-    const story = await createStory(userId, title);
-
-    if (initialMessage) {
-      await saveStoryMessage(
-        story.id,
-        initialMessage.content,
-        initialMessage.isBot,
-        initialMessage.choices
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'User ID is required' },
+        { status: 400 }
       );
     }
 
-    return NextResponse.json({ success: true, story });
+    const stories = await getUserStories(parseInt(userId));
+    return NextResponse.json({ success: true, stories });
   } catch (error) {
-    console.error('Error creating story:', error);
+    console.error('Error fetching stories:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create story' },
+      { success: false, error: 'Failed to fetch stories' },
       { status: 500 }
     );
   }

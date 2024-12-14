@@ -1,6 +1,7 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Send } from 'lucide-react';
+import { useUser } from '@/contexts/user-context';
 
 type Message = {
   id: number;
@@ -9,62 +10,88 @@ type Message = {
   choices?: string[];
 };
 
-const initialMessages: Message[] = [
-  {
-    id: 1,
-    content:
-      'In a mysterious forest, where the trees whispered ancient secrets, a young adventurer discovered a glowing crystal embedded in an old tree trunk. The crystal pulsed with an otherworldly light...',
-    isBot: true,
-    choices: [
-      'Reach out and touch the crystal',
-      'Look around for any signs of danger first',
-      'Try to dig the crystal out carefully',
-    ],
-  },
-];
-
 export default function NewTale() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState('');
+  const [storyId, setStoryId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const { user } = useUser();
 
-  const handleSendMessage = (
-    e: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>
-  ) => {
+  const startNewStory = useCallback(async () => {
+    if (!user || isInitialized) return;
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/story/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+
+      setStoryId(data.story.id);
+      setMessages([data.message]);
+      setIsInitialized(true);
+    } catch (error) {
+      console.error('Failed to start story:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, isInitialized]);
+
+  useEffect(() => {
+    startNewStory();
+  }, [startNewStory]);
+
+  const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!userInput.trim()) return;
+    if (!userInput.trim() || !storyId || !user) return;
 
-    // Add user's message
-    const newUserMessage: Message = {
-      id: messages.length + 1,
-      content: userInput,
-      isBot: false,
-    };
-
-    // Simulate bot response
-    const botResponse: Message = {
-      id: messages.length + 2,
-      content:
-        'As you touched the crystal, it pulsed brighter, and suddenly the forest around you seemed to shift and change. The trees began to glow with the same ethereal light...',
-      isBot: true,
-      choices: [
-        'Close your eyes and embrace the energy',
-        'Step back quickly',
-        'Try to communicate with the forest',
-      ],
-    };
-
-    setMessages([...messages, newUserMessage, botResponse]);
+    const userMessage = userInput;
     setUserInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/story/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          storyId,
+          userInput: userMessage,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+
+      setMessages((prev) => [
+        ...prev,
+        { id: prev.length + 1, content: userMessage, isBot: false },
+        data.message,
+      ]);
+    } catch (error) {
+      console.error('Failed to continue story:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChoiceClick = (choice: string) => {
     setUserInput(choice);
-    handleSendMessage({
-      preventDefault: () => {},
-      type: 'submit',
-    } as React.FormEvent<HTMLFormElement>);
+    const form = document.querySelector('form');
+    if (form) form.requestSubmit();
   };
 
+  // Rest of your component JSX remains the same, but add loading state handling
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
       <h1 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
@@ -77,14 +104,14 @@ export default function NewTale() {
           <div
             key={message.id}
             className={`flex ${
-              message.isBot ? 'justify-start' : 'justify-end'
+              message.isBot ? 'justify-end' : 'justify-start'
             }`}
           >
             <div
               className={`max-w-[80%] rounded-lg p-4 ${
                 message.isBot
-                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                  : 'bg-indigo-600 text-white'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-indigo-50 dark:bg-gray-700 text-gray-900 dark:text-white'
               }`}
             >
               <p className="text-sm">{message.content}</p>
@@ -106,6 +133,13 @@ export default function NewTale() {
             </div>
           </div>
         ))}
+        {isLoading && (
+          <div className="flex justify-center">
+            <div className="animate-pulse text-gray-500 dark:text-gray-400">
+              Generating story...
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Input Area */}
@@ -116,10 +150,12 @@ export default function NewTale() {
           onChange={(e) => setUserInput(e.target.value)}
           className="flex-1 px-4 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white sm:text-sm"
           placeholder="Type your response or choose an option above..."
+          disabled={isLoading}
         />
         <button
           type="submit"
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center"
+          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isLoading}
         >
           <Send className="w-4 h-4" />
         </button>
