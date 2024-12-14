@@ -3,14 +3,10 @@ import { sql } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  request: Request,
-  { params }: { params: { messageId: string } }
-) {
+export async function GET(request: Request) {
   try {
-    // Wait for params to be available
-    const { messageId: messageIdString } = await Promise.resolve(params);
-    const messageId = parseInt(messageIdString, 10);
+    // Extract messageId from URL
+    const messageId = parseInt(request.url.split('/messages/')[1], 10);
 
     if (isNaN(messageId)) {
       return NextResponse.json(
