@@ -1,6 +1,11 @@
 'use client';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User } from '@/types/story';
+
+type User = {
+  id: number;
+  name: string;
+  email: string;
+};
 
 type UserContextType = {
   user: User | null;

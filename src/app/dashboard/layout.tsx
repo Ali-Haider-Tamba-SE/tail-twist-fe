@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useTheme } from '@/components/theme-provider';
+import { useTheme } from '../../components/theme-provider';
+import { useUser } from '../../contexts/user-context';
 import {
   Home,
   BookOpen,
@@ -16,7 +17,6 @@ import {
   LogOut,
   ScrollText,
 } from 'lucide-react';
-import { useUser } from '@/contexts/user-context';
 import { useRouter } from 'next/navigation';
 
 const navigationItems = [
