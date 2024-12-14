@@ -2,6 +2,8 @@
 import { X, BookOpen, ArrowRightCircle } from 'lucide-react';
 import { Message } from '@/types/story';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type StoryModalProps = {
   isOpen: boolean;
@@ -21,9 +23,10 @@ export default function StoryModal({
   storyId,
 }: StoryModalProps) {
   const router = useRouter();
-  if (!isOpen) return null;
-
+  const [currentPage, setCurrentPage] = useState(0);
   const botMessages = messages.filter((message) => message.is_bot);
+
+  if (!isOpen) return null;
 
   const handleContinue = () => {
     const lastMessage = messages[messages.length - 1];
@@ -31,6 +34,18 @@ export default function StoryModal({
     router.push(
       `/dashboard/new-tale?storyId=${storyId}&lastMessageId=${lastMessage.id}`
     );
+  };
+
+  const nextPage = () => {
+    if (currentPage < botMessages.length - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
   };
 
   return (
@@ -41,35 +56,67 @@ export default function StoryModal({
             <BookOpen className="w-5 h-5" />
             {title}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
-          >
-            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          </button>
-        </div>
-        <div className="p-4 overflow-y-auto max-h-[calc(80vh-8rem)] space-y-4">
-          {botMessages.map((message, index) => (
-            <div
-              key={message.id + index}
-              className="prose dark:prose-invert max-w-none space-y-4"
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-500">
+              Page {currentPage + 1} of {botMessages.length}
+            </span>
+            <button
+              onClick={onClose}
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
             >
-              {message.image_url && (
-                <img
-                  src={message.image_url}
-                  alt="Story illustration"
-                  className="w-full rounded-lg shadow-lg max-w-md mx-auto"
-                  onError={(e) => {
-                    console.error('Image failed to load:', message.image_url);
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              )}
-              <div className="text-sm whitespace-pre-wrap">
-                {message.content}
+              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            </button>
+          </div>
+        </div>
+        <div className="relative h-[calc(80vh-8rem)] overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentPage}
+              initial={{ opacity: 0, x: 300 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -300 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="p-4 h-full overflow-y-auto"
+            >
+              <div className="prose dark:prose-invert max-w-none space-y-4">
+                {botMessages[currentPage]?.image_url && (
+                  <img
+                    src={botMessages[currentPage].image_url}
+                    alt="Story illustration"
+                    className="w-full rounded-lg shadow-lg max-w-md mx-auto"
+                    onError={(e) => {
+                      console.error(
+                        'Image failed to load:',
+                        botMessages[currentPage].image_url
+                      );
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                )}
+                <div className="text-sm whitespace-pre-wrap">
+                  {botMessages[currentPage]?.content}
+                </div>
               </div>
-            </div>
-          ))}
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Navigation Buttons */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-between bg-gradient-to-t from-white dark:from-gray-800">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 0}
+              className="px-4 py-2 bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-white rounded-md disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button
+              onClick={nextPage}
+              disabled={currentPage === botMessages.length - 1}
+              className="px-4 py-2 bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-white rounded-md disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
         {status === 'in_progress' && (
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
